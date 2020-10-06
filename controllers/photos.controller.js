@@ -1,4 +1,5 @@
 const Photo = require('../models/photo.model');
+const Voter = require('../models/Voter.model');
 const sanitize = require('mongo-sanitize');
 
 /****** SUBMIT PHOTO ********/
@@ -53,9 +54,34 @@ exports.vote = async (req, res) => {
     const photoToUpdate = await Photo.findOne({ _id: req.params.id });
     if(!photoToUpdate) res.status(404).json({ message: 'Not found' });
     else {
-      photoToUpdate.votes++;
-      photoToUpdate.save();
-      res.send({ message: 'OK' });
+
+      const voter = await Voter.findOne({user: { $eq: req.ip} });
+
+      if(!voter) {
+        const newVoter = new Voter({
+          user: req.ip,
+          votes: [req.params.id],
+        });
+        await newVoter.save();
+
+        photoToUpdate.votes++;
+        photoToUpdate.save();
+        res.send({ message: 'OK' });
+
+      } else {
+
+        if(voter.votes.indexOf(req.params.id) === -1) {
+          voter.votes.push(req.params.id);
+          await voter.save();
+
+          photoToUpdate.votes++;
+          photoToUpdate.save();
+          res.send({ message: 'OK' });
+
+        } else {
+          throw new Error('User already voted!');
+        }
+      }
     }
   } catch(err) {
     res.status(500).json(err);
