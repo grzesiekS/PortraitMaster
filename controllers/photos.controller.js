@@ -1,11 +1,13 @@
 const Photo = require('../models/photo.model');
+const sanitize = require('mongo-sanitize');
 
 /****** SUBMIT PHOTO ********/
 
 exports.add = async (req, res) => {
 
   try {
-    const { title, author, email } = req.fields;
+    const cleanFields = sanitize(req.fields);
+    const { title, author, email } = cleanFields;
     const file = req.files.file;
 
     if(title && author && email && file) { // if fields are not empty...
@@ -13,7 +15,7 @@ exports.add = async (req, res) => {
       const fileName = file.path.split('/').slice(-1)[0]; // cut only filename from full path, e.g. C:/test/abc.jpg -> abc.jpg
       const fileExt = fileName.split('.').slice(-1)[0];
       const fileTypes = ['gif', 'jpg', 'png'];
-      if(fileTypes.indexOf(fileExt) >= 0 && title.length <= 25 && author.length <= 50) {
+      if(fileTypes.indexOf(fileExt) >= 0 && title.length <= 25 && author.length <= 50 && email.split('@').length === 2) {
         const newPhoto = new Photo({ title, author, email, src: fileName, votes: 0 });
         await newPhoto.save(); // ...save new photo in DB
         res.json(newPhoto);
