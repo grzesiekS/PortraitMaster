@@ -5,4 +5,4 @@ const voterSchema = new mongoose.Schema({
     votes: {type: Array, required: true},
 });
 
-module.exports = mongoose.model('Vouter', voterSchema);
+module.exports = mongoose.model('Voter', voterSchema);
